@@ -13,6 +13,21 @@
       </li>
       {% endfor %}
     </ul>
+
+    <h2>Word Clouds</h2>
+    {% if word_clouds %}
+    <ul>
+      {% for file, image_path in word_clouds %}
+      <li>
+        <img src="{{ image_path }}" alt="Word Cloud for {{ file.file.name }}" />
+        <p>{{ file.file.name }}</p>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>No word clouds available.</p>
+    {% endif %}
+
     <a href="{% url 'upload_file' %}">Upload a new file</a>
   </body>
 </html>
