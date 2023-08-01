@@ -1,0 +1,15 @@
+<!-- fileuploader/templates/fileuploader/file_update.html -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Update File</title>
+  </head>
+  <body>
+    <h2>Update File</h2>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %} {{ form.as_p }}
+      <button type="submit">Update</button>
+    </form>
+    <a href="{% url 'file_detail' file.pk %}">Cancel</a>
+  </body>
+</html>

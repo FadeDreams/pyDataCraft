@@ -1,0 +1,16 @@
+<!-- fileuploader/templates/fileuploader/file_detail.html -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>File Detail</title>
+  </head>
+  <body>
+    <h2>File Detail</h2>
+    <p>File Name: {{ file.file.name }}</p>
+    <p>Database: {{ file.get_database_display }}</p>
+    <p>Uploaded at: {{ file.uploaded_at }}</p>
+    <a href="{% url 'file_update' file.pk %}">Edit</a>
+    <a href="{% url 'file_delete' file.pk %}">Delete</a>
+    <a href="{% url 'file_list' %}">Back to List</a>
+  </body>
+</html>

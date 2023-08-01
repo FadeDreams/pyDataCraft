@@ -1,0 +1,16 @@
+<!-- fileuploader/templates/fileuploader/file_delete.html -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Delete File</title>
+  </head>
+  <body>
+    <h2>Delete File</h2>
+    <p>Are you sure you want to delete the file "{{ file.file.name }}"?</p>
+    <form method="post">
+      {% csrf_token %}
+      <button type="submit">Delete</button>
+    </form>
+    <a href="{% url 'file_detail' file.pk %}">Cancel</a>
+  </body>
+</html>
