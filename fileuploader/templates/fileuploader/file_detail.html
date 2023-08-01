@@ -5,12 +5,33 @@
     <title>File Detail</title>
   </head>
   <body>
-    <h2>File Detail</h2>
-    <p>File Name: {{ file.file.name }}</p>
-    <p>Database: {{ file.get_database_display }}</p>
-    <p>Uploaded at: {{ file.uploaded_at }}</p>
-    <a href="{% url 'file_update' file.pk %}">Edit</a>
-    <a href="{% url 'file_delete' file.pk %}">Delete</a>
-    <a href="{% url 'file_list' %}">Back to List</a>
+    <h2>{{ file.file.name }}</h2>
+
+    {% if not data.empty %}
+    <!-- Display CSV data in a table -->
+    <table>
+      <thead>
+        <tr>
+          {% for column in columns %}
+          <th>{{ column }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          {% for cell in row %}
+          <td>{{ cell }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %} {% if json_formatted %}
+    <!-- Display formatted JSON data -->
+    <pre>{{ json_formatted }}</pre>
+    {% endif %}
+
+    <a href="{% url 'file_list' %}">Back to File List</a>
   </body>
 </html>

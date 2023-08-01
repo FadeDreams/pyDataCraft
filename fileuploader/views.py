@@ -5,6 +5,7 @@ from .models import UploadedFile
 import pandas as pd
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
+import pandas as pd
 import json
 
 
@@ -47,6 +48,7 @@ def generate_word_cloud_from_data(data, file):
     else:
         return None
 
+
 def file_list(request):
     files = UploadedFile.objects.all()
     word_clouds = []
@@ -54,10 +56,11 @@ def file_list(request):
     for file in files:
         data = None
         if file.file.name.endswith('.json'):
+            ...
             # Read JSON file
-            with file.file.open() as f:
-                data = json.load(f)
-                data = pd.DataFrame(data)  # Convert JSON to DataFrame
+            # with file.file.open() as f:
+                # data = json.load(f)
+                # data = pd.DataFrame(data)  # Convert JSON to DataFrame
         elif file.file.name.endswith('.csv'):
             # Read CSV file
             with file.file.open() as f:
@@ -72,9 +75,56 @@ def file_list(request):
 
 
 
+
+# def file_detail(request, pk):
+    # file = get_object_or_404(UploadedFile, pk=pk)
+    # return render(request, 'fileuploader/file_detail.html', {'file': file})
+# fileuploader/views.py
+import pandas as pd
+
 def file_detail(request, pk):
     file = get_object_or_404(UploadedFile, pk=pk)
-    return render(request, 'fileuploader/file_detail.html', {'file': file})
+
+    if file.file.name.endswith('.csv'):
+        # Read CSV file
+        with file.file.open() as f:
+            data = pd.read_csv(f)
+            columns = data.columns
+            rows = data.values.tolist()
+
+        # Prepare JSON variables as None when the file is a CSV
+        json_data = None
+        json_formatted = None
+
+    elif file.file.name.endswith('.json'):
+        # Read JSON file
+        with file.file.open() as f:
+            json_data = json.load(f)
+            # Convert JSON data to a formatted string for display
+            json_formatted = json.dumps(json_data, indent=2)
+        
+        # Prepare CSV variables as None when the file is a JSON
+        data = None
+        columns = None
+        rows = None
+
+    else:
+        # If the file has neither .csv nor .json extension, set all variables as None
+        data = None
+        columns = None
+        rows = None
+        json_data = None
+        json_formatted = None
+
+    return render(request, 'fileuploader/file_detail.html', {
+        'file': file,
+        'data': data,
+        'columns': columns,
+        'rows': rows,
+        'json_data': json_data,
+        'json_formatted': json_formatted,
+    })
+
 
 def file_update(request, pk):
     file = get_object_or_404(UploadedFile, pk=pk)
