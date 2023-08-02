@@ -1,4 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse
+
 from .form import FileUploadForm
 from .models import UploadedFile
 
@@ -7,6 +9,28 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import pandas as pd
 import json
+from pymongo import MongoClient
+client = MongoClient('mongodb://localhost:27017/')
+
+def test_mongodb(request):
+    # Connect to MongoDB
+    client = MongoClient('mongodb://localhost:27017/')
+    db = client['dbt1']
+    collection = db['colt1']
+
+    # Retrieve data from the collection
+    data = collection.find()
+
+    # Convert the data to a list for printing
+    data_list = list(data)
+
+    # Print the data to the console
+    for item in data_list:
+        print(item)
+
+    # Return a simple response
+    return HttpResponse("MongoDB data printed to console.")
+
 
 
 def upload_file(request):
@@ -14,15 +38,43 @@ def upload_file(request):
         form = FileUploadForm(request.POST, request.FILES)
         if form.is_valid():
             uploaded_file = form.cleaned_data['file']
-            database_choice = form.cleaned_data['database']  # Get the selected database choice
-            print(database_choice)
+            database_choice = form.cleaned_data['database']
+
             instance = UploadedFile(file=uploaded_file)
             instance.save()
-            # Process the selected database choice here, e.g., send it to template or perform specific actions
+
+            saved_instance_pk = instance.pk
+            current_file = get_object_or_404(UploadedFile, pk=saved_instance_pk)
+
+            db = client['dbt1']
+            collection = db['colt1']
+
+            if current_file.file.name.endswith('.csv'):
+                # Read CSV file
+                with current_file.file.open() as f:
+                    data = pd.read_csv(f)
+                    data_dict = data.to_dict(orient='records')
+
+                    # Insert each row as a document
+                    for doc in data_dict:
+                        collection.insert_one(doc)
+
+            elif current_file.file.name.endswith('.json'):
+                # Read JSON file
+                with current_file.file.open() as f:
+                    json_data = json.load(f)
+
+                    # Insert the JSON data directly
+                    collection.insert_one(json_data)
+
+            if database_choice == 'mongodb':
+                print('Data inserted into MongoDB')
+
             return redirect('upload_success')
     else:
         form = FileUploadForm()
     return render(request, 'fileuploader/upload.html', {'form': form})
+
 
 def upload_success(request):
     return render(request, 'fileuploader/upload_success.html')
@@ -80,7 +132,6 @@ def file_list(request):
     # file = get_object_or_404(UploadedFile, pk=pk)
     # return render(request, 'fileuploader/file_detail.html', {'file': file})
 # fileuploader/views.py
-import pandas as pd
 
 def file_detail(request, pk):
     file = get_object_or_404(UploadedFile, pk=pk)

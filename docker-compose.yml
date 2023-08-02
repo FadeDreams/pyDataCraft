@@ -2,9 +2,9 @@ version: "3"
 
 services:
   django:
-    image: python:3.9
+    image: python:3.10-slim
     container_name: django_app
-    command: sh -c "pip install -r requirements.txt && python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "pip install --no-cache-dir -r requirements.txt && python manage.py runserver 0.0.0.0:8000"
     ports:
       - "8000:8000"
     volumes:
@@ -29,7 +29,7 @@ services:
       - "9200:9200"
 
   mongodb:
-    image: mongo:latest
+    image: mongo:3.6
     container_name: mongodb
     ports:
       - "27017:27017"
