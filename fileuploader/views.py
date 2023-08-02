@@ -252,6 +252,7 @@ class FileUpdateView(View):
                     # Read JSON file
                     with file.file.open() as f:
                         json_data = json.load(f)
+
                         # Insert the JSON data directly with the identifier (pk)
                         json_data['identifier'] = identifier
                         collection.insert_one(json_data)
@@ -261,6 +262,7 @@ class FileUpdateView(View):
                 es_uploader = ElasticsearchUploader(hosts=[{'host': es_host, 'port': es_port, 'scheme': es_scheme}])
                 es_uploader.upload_data(request, file, identifier)  # Update Elasticsearch data
                 # You might want to handle errors and return appropriate responses here
+
             return redirect('file_list')
         
         # Return an HttpResponse in case the form is not valid
