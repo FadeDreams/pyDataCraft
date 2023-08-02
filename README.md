@@ -1,0 +1,1 @@
+- curl -s -X GET "http://localhost:9200/colt1/\_search" | jq

@@ -8,7 +8,11 @@ class FileUploadForm(forms.Form):
     )
     
     database_choices = [('elasticsearch', 'Elasticsearch'), ('mongodb', 'MongoDB')]
-    database = forms.ChoiceField(choices=database_choices, widget=forms.RadioSelect)
+    database = forms.ChoiceField(
+        choices=database_choices,
+        widget=forms.RadioSelect,
+        initial='mongodb'  # Set the default value to 'mongodb'
+    )
 
     def clean_file(self):
         file = self.cleaned_data['file']

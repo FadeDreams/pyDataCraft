@@ -1,6 +1,9 @@
+from .utils import ElasticsearchUploader
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 
+from elasticsearch import Elasticsearch
 from .form import FileUploadForm
 from .models import UploadedFile
 
@@ -9,13 +12,15 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import pandas as pd
 import json
+import os
 from pymongo import MongoClient
-client = MongoClient('mongodb://localhost:27017/')
-from elasticsearch import Elasticsearch
+
+# client = MongoClient('mongodb://localhost:27017/')
+mongodb_uri = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
+client = MongoClient(mongodb_uri)
 
 def test_mongodb(request):
     # Connect to MongoDB
-    client = MongoClient('mongodb://localhost:27017/')
     db = client['dbt1']
     collection = db['colt1']
 
@@ -105,49 +110,10 @@ def upload_file(request):
                         # Insert the JSON data directly
                         collection.insert_one(json_data)
 
-        if database_choice == 'elasticsearch':
-            try:
-                # Connect to Elasticsearch cluster
-                es = Elasticsearch(hosts=[{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])
+            if database_choice == 'elasticsearch':
+                es_uploader = ElasticsearchUploader(hosts=[{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])
+                return es_uploader.upload_data(request, current_file)
 
-                # Check if the Elasticsearch cluster is up and running
-                if es.ping():
-                    index_name = 'colt1'
-
-                    # Create an index if it doesn't exist
-                    if not es.indices.exists(index=index_name):
-                        es.indices.create(index=index_name)
-
-                    if current_file.file.name.endswith('.csv'):
-                        # Read CSV file
-                        with current_file.file.open() as f:
-                            data = pd.read_csv(f)
-                            data_dict = data.to_dict(orient='records')
-
-                            # Index each row as a document
-                            for doc in data_dict:
-                                es.index(index=index_name, body=doc)
-
-                    elif current_file.file.name.endswith('.json'):
-                        # Read JSON file
-                        with current_file.file.open() as f:
-                            json_data = json.load(f)
-
-                            # Index the JSON data directly
-                            es.index(index=index_name, body=json_data)
-
-                    response_data = {
-                        "message": f"Data indexed into Elasticsearch index '{index_name}' successfully"
-                    }
-
-                    # return JsonResponse(response_data)
-                    return render(request, 'fileuploader/elastic_upload_success.html', {'response_data': response_data})
-
-                else:
-                    return JsonResponse({"message": "Elasticsearch cluster is not reachable"})
-
-            except Exception as e:
-                return JsonResponse({"message": f"Error: {str(e)}"})
 
             return redirect('upload_success')
     else:
