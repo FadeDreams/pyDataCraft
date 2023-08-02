@@ -14,6 +14,7 @@ es_host = os.getenv('ELASTICSEARCH_HOST', 'localhost')
 es_port = int(os.getenv('ELASTICSEARCH_PORT', 9200))
 es_scheme = os.getenv('ELASTICSEARCH_SCHEME', 'http')
 
+mongodb_uri = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
 mongodb_name = os.getenv('MONGODB_NAME', 'dbt1')
 mongodb_collection = os.getenv('MONGODB_COLLECTION', 'colt1')
 
@@ -21,7 +22,6 @@ mongodb_collection = os.getenv('MONGODB_COLLECTION', 'colt1')
 class TestMongoDBView(View):
     def get(self, request):
         # Connect to MongoDB
-        mongodb_uri = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
         client = MongoClient(mongodb_uri)
 
         db = client[mongodb_name]
@@ -43,10 +43,6 @@ class TestMongoDBView(View):
 class TestElasticView(View):
     def get(self, request):
         try:
-            # Connect to Elasticsearch cluster
-            # es_host = os.getenv('ELASTICSEARCH_HOST', 'localhost')
-            # es_port = int(os.getenv('ELASTICSEARCH_PORT', 9200))
-            # es_scheme = os.getenv('ELASTICSEARCH_SCHEME', 'http')
             es = Elasticsearch(hosts=[{'host': es_host, 'port': es_port, 'scheme': es_scheme}])
 
             # Check if the Elasticsearch cluster is up and running
@@ -98,14 +94,11 @@ class UploadFileView(View):
             saved_instance_pk = instance.pk
             current_file = get_object_or_404(UploadedFile, pk=saved_instance_pk)
 
-            mongodb_uri = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
             client = MongoClient(mongodb_uri)
             db = client[mongodb_name]
             collection = db[mongodb_collection]
 
-            # db = client['dbt1']
-            # collection = db['colt1']
-            identifier = current_file.pk  # Use the pk as the identifier
+            identifier = current_file.pk 
 
             print(database_choice)
             if database_choice == 'mongodb':
@@ -133,7 +126,6 @@ class UploadFileView(View):
             if database_choice == 'elasticsearch':
 
                 es_uploader = Elasticsearch(hosts=[{'host': es_host, 'port': es_port, 'scheme': es_scheme}])
-                # es_uploader = ElasticsearchUploader(hosts=[{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])
                 return es_uploader.upload_data(request, current_file, identifier)
 
             return redirect('upload_success')
@@ -233,17 +225,12 @@ class FileUpdateView(View):
             file.database = form.cleaned_data['database']
             file.save()
 
-            identifier = int(pk)  # Convert pk to string if needed
+            identifier = int(pk)
             # Update MongoDB or Elasticsearch based on the selected database
             if file.database == 'mongodb':
-                mongodb_uri = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
                 client = MongoClient(mongodb_uri)
                 db = client[mongodb_name]
                 collection = db[mongodb_collection]
-
-                # db = client['dbt1']
-                # collection = db['colt1']
-                
                 
                 # Delete documents with matching identifier
                 result = collection.delete_many({'identifier': identifier})
@@ -265,18 +252,19 @@ class FileUpdateView(View):
                     # Read JSON file
                     with file.file.open() as f:
                         json_data = json.load(f)
-
                         # Insert the JSON data directly with the identifier (pk)
                         json_data['identifier'] = identifier
                         collection.insert_one(json_data)
                         # print("inserted ", json_data)
 
             elif file.database == 'elasticsearch':
-                es_uploader = ElasticsearchUploader(hosts=[{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])
+                es_uploader = ElasticsearchUploader(hosts=[{'host': es_host, 'port': es_port, 'scheme': es_scheme}])
                 es_uploader.upload_data(request, file, identifier)  # Update Elasticsearch data
                 # You might want to handle errors and return appropriate responses here
-
             return redirect('file_list')
+        
+        # Return an HttpResponse in case the form is not valid
+        return HttpResponse("Form is not valid. Please check your input.")
 
 class FileDeleteView(View):
     template_name = 'fileuploader/file_delete.html'
