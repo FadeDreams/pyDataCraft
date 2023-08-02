@@ -84,6 +84,11 @@ DATABASES = {
 }
 # env
 MONGODB_URI = os.getenv('MONGODB_URI', 'mongodb://localhost:27017/')
+MONGODB_NAME = os.getenv('MONGODB_URI', 'dbt1')
+MONGODB_COLLECTION = os.getenv('MONGODB_URI', 'colt1')
+ELASTICSEARCH_HOST = os.getenv('ELASTICSEARCH_HOST', 'localhost')
+ELASTICSEARCH_PORT = int(os.getenv('ELASTICSEARCH_PORT', 9200))
+ELASTICSEARCH_SCHEME = os.getenv('ELASTICSEARCH_SCHEME', 'http')
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

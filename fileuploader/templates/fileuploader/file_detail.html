@@ -7,6 +7,9 @@
   <body>
     <h2>{{ file.file.name }}</h2>
 
+    <a href="{% url 'file_list' %}">Back to File List</a>
+    <a href="{% url 'file_update' pk=file.pk %}">Update File</a>
+
     {% if not data.empty %}
     <!-- Display CSV data in a table -->
     <table>
@@ -31,7 +34,5 @@
     <!-- Display formatted JSON data -->
     <pre>{{ json_formatted }}</pre>
     {% endif %}
-
-    <a href="{% url 'file_list' %}">Back to File List</a>
   </body>
 </html>
