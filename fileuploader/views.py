@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 
 from .form import FileUploadForm
 from .models import UploadedFile
@@ -11,6 +11,7 @@ import pandas as pd
 import json
 from pymongo import MongoClient
 client = MongoClient('mongodb://localhost:27017/')
+from elasticsearch import Elasticsearch
 
 def test_mongodb(request):
     # Connect to MongoDB
@@ -31,6 +32,40 @@ def test_mongodb(request):
     # Return a simple response
     return HttpResponse("MongoDB data printed to console.")
 
+def test_elastic(request):
+    try:
+        # Connect to Elasticsearch cluster
+        es = Elasticsearch(hosts=[{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])
+
+        # Check if the Elasticsearch cluster is up and running
+        if es.ping():
+            index_name = 'colt1'
+
+            # Create an index if it doesn't exist
+            if not es.indices.exists(index=index_name):
+                es.indices.create(index=index_name)
+
+            # Perform a basic search operation
+            search_results = es.search(index=index_name, body={
+                "query": {
+                    "match_all": {}
+                }
+            })
+
+            total_hits = search_results['hits']['total']['value']
+            
+            response_data = {
+                "message": "Elasticsearch connection test successful",
+                "total_hits": total_hits
+            }
+
+            return JsonResponse(response_data)
+
+        else:
+            return JsonResponse({"message": "Elasticsearch cluster is not reachable"})
+
+    except Exception as e:
+        return JsonResponse({"message": f"Error: {str(e)}"})
 
 
 def upload_file(request):
@@ -49,26 +84,70 @@ def upload_file(request):
             db = client['dbt1']
             collection = db['colt1']
 
-            if current_file.file.name.endswith('.csv'):
-                # Read CSV file
-                with current_file.file.open() as f:
-                    data = pd.read_csv(f)
-                    data_dict = data.to_dict(orient='records')
-
-                    # Insert each row as a document
-                    for doc in data_dict:
-                        collection.insert_one(doc)
-
-            elif current_file.file.name.endswith('.json'):
-                # Read JSON file
-                with current_file.file.open() as f:
-                    json_data = json.load(f)
-
-                    # Insert the JSON data directly
-                    collection.insert_one(json_data)
-
+            print(database_choice)
             if database_choice == 'mongodb':
                 print('Data inserted into MongoDB')
+                if current_file.file.name.endswith('.csv'):
+                # Read CSV file
+                    with current_file.file.open() as f:
+                        data = pd.read_csv(f)
+                        data_dict = data.to_dict(orient='records')
+
+                        # Insert each row as a document
+                        for doc in data_dict:
+                            collection.insert_one(doc)
+
+                elif current_file.file.name.endswith('.json'):
+                    # Read JSON file
+                    with current_file.file.open() as f:
+                        json_data = json.load(f)
+
+                        # Insert the JSON data directly
+                        collection.insert_one(json_data)
+
+        if database_choice == 'elasticsearch':
+            try:
+                # Connect to Elasticsearch cluster
+                es = Elasticsearch(hosts=[{'host': 'localhost', 'port': 9200, 'scheme': 'http'}])
+
+                # Check if the Elasticsearch cluster is up and running
+                if es.ping():
+                    index_name = 'colt1'
+
+                    # Create an index if it doesn't exist
+                    if not es.indices.exists(index=index_name):
+                        es.indices.create(index=index_name)
+
+                    if current_file.file.name.endswith('.csv'):
+                        # Read CSV file
+                        with current_file.file.open() as f:
+                            data = pd.read_csv(f)
+                            data_dict = data.to_dict(orient='records')
+
+                            # Index each row as a document
+                            for doc in data_dict:
+                                es.index(index=index_name, body=doc)
+
+                    elif current_file.file.name.endswith('.json'):
+                        # Read JSON file
+                        with current_file.file.open() as f:
+                            json_data = json.load(f)
+
+                            # Index the JSON data directly
+                            es.index(index=index_name, body=json_data)
+
+                    response_data = {
+                        "message": f"Data indexed into Elasticsearch index '{index_name}' successfully"
+                    }
+
+                    return JsonResponse(response_data)
+                    return render(request, 'fileuploader/elastic_upload_success.html')
+
+                else:
+                    return JsonResponse({"message": "Elasticsearch cluster is not reachable"})
+
+            except Exception as e:
+                return JsonResponse({"message": f"Error: {str(e)}"})
 
             return redirect('upload_success')
     else:

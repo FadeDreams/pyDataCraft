@@ -7,6 +7,7 @@ from . import views
 
 urlpatterns = [
     path('test/', views.test_mongodb, name='test_mongodb'),
+    path('teste/', views.test_elastic, name='test_elastic'),
     path('upload/', views.upload_file, name='upload_file'),
     path('upload/success/', views.upload_success, name='upload_success'),
     path('file/<int:pk>/', views.file_detail, name='file_detail'),
