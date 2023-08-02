@@ -142,15 +142,18 @@ class FileListView(View):
     def get(self, request) -> HttpResponse:
         files = UploadedFile.objects.all()
         word_clouds = []
+        word_clouds_json = []
 
         for file in files:
             data = None
+            data2 = None
             if file.file.name.endswith('.json'):
-                ...
+                # ...
                 # Read JSON file
-                # with file.file.open() as f:
-                    # data = json.load(f)
-                    # data = pd.DataFrame(data)  # Convert JSON to DataFrame
+                with file.file.open() as f:
+                    json_data = json.load(f)
+                    data2 = pd.json_normalize(json_data)
+                    print(data2)
             elif file.file.name.endswith('.csv'):
                 # Read CSV file
                 with file.file.open() as f:
@@ -161,7 +164,12 @@ class FileListView(View):
                 if image_path:
                     word_clouds.append((file, image_path))
 
-        return render(request, self.template_name, {'files': files, 'word_clouds': word_clouds})
+            if data2 is not None:
+                image_path = generate_word_cloud_from_data(data2, file)  # Pass 'file' object as an argument
+                if image_path:
+                    word_clouds_json.append((file, image_path))
+
+        return render(request, self.template_name, {'files': files, 'word_clouds': word_clouds, 'word_clouds_json': word_clouds_json})
 
 class FileDetailView(View):
     template_name = 'fileuploader/file_detail.html'

@@ -87,7 +87,11 @@ def generate_word_cloud_from_data(data, file):
     content = ""
     for column_name in data.columns:
         if data[column_name].dtype == 'object':
-            content += ' '.join(data[column_name].dropna()) + ' '
+            column_values = data[column_name].dropna()
+            if all(isinstance(value, str) for value in column_values):
+                content += ' '.join(column_values) + ' '
+            elif all(isinstance(value, list) for value in column_values):
+                content += ' '.join([item for sublist in column_values for item in sublist]) + ' '
 
     if content.strip():
         wordcloud = WordCloud(width=800, height=400, background_color='white').generate(content)
