@@ -140,8 +140,8 @@ def upload_file(request):
                         "message": f"Data indexed into Elasticsearch index '{index_name}' successfully"
                     }
 
-                    return JsonResponse(response_data)
-                    return render(request, 'fileuploader/elastic_upload_success.html')
+                    # return JsonResponse(response_data)
+                    return render(request, 'fileuploader/elastic_upload_success.html', {'response_data': response_data})
 
                 else:
                     return JsonResponse({"message": "Elasticsearch cluster is not reachable"})
