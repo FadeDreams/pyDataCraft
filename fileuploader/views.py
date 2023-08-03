@@ -125,8 +125,12 @@ class UploadFileView(View):
 
             if database_choice == 'elasticsearch':
 
-                es_uploader = Elasticsearch(hosts=[{'host': es_host, 'port': es_port, 'scheme': es_scheme}])
-                return es_uploader.upload_data(request, current_file, identifier)
+                # es_uploader = Elasticsearch(hosts=[{'host': es_host, 'port': es_port, 'scheme': es_scheme}])
+                # return es_uploader.upload_data(request, current_file, identifier)
+
+                es_uploader = ElasticsearchUploader(hosts=[{'host': es_host, 'port': es_port, 'scheme': es_scheme}])
+                es_uploader.upload_data(request, current_file, identifier)  # Update Elasticsearch data
+
 
             return redirect('upload_success')
 
