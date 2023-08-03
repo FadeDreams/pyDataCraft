@@ -8,6 +8,9 @@
    python3 -m venv venv
    source venv/bin/activate
    pip install -r requirements.txt
+   python3 manage.py makemigrations
+   python3 manage.py migrate
+   python3 manage.py createsuperuser
    ```
 
 2. edit .env file and make sure elasticsearch and mongodb are running:
@@ -22,3 +25,10 @@ MONGODB_COLLECTION=colt1
 ```
 
 3. head to: http://localhost:8000/fileuploader/
+
+You may additionally utilize docker compose to launch the application, but it is not necessary.
+
+```
+docker-compose up --build
+
+```

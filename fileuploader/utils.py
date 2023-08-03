@@ -44,43 +44,42 @@ class ElasticsearchUploader:
             return JsonResponse({"message": f"Error: {str(e)}"})
 
     def update_data(self, request, current_file, index_name):
-            try:
-                if self.es.ping():
-                    # index_name = f'colt1_{identifier}'  # Use the identifier in the index name
+        print("in update_data")
+        try:
+            if self.es.ping():
+                # index_name = f'colt1_{identifier}'  # Use the identifier in the index name
 
-                    if self.es.indices.exists(index=index_name):
-                        # Delete the existing index
-                        self.es.indices.delete(index=index_name)
+                if self.es.indices.exists(index=index_name):
+                    # Delete the existing index
+                    self.es.indices.delete(index=index_name)
 
-                    # Create a new index
-                    self.es.indices.create(index=index_name)
+                # Create a new index
+                self.es.indices.create(index=index_name)
 
-                    if current_file.file.name.endswith('.csv'):
-                        with current_file.file.open() as f:
-                            data = pd.read_csv(f)
-                            data_dict = data.to_dict(orient='records')
+                if current_file.file.name.endswith('.csv'):
+                    with current_file.file.open() as f:
+                        data = pd.read_csv(f)
+                        data_dict = data.to_dict(orient='records')
 
-                            for doc in data_dict:
-                                # Assuming 'id' is the unique identifier in your document
-                                self.es.index(index=index_name, body=doc, id=doc['id'])
+                        for doc in data_dict:
+                            self.es.index(index=index_name, body=doc)
 
-                    elif current_file.file.name.endswith('.json'):
-                        with current_file.file.open() as f:
-                            json_data = json.load(f)
-                            # Assuming 'id' is the unique identifier in your document
-                            self.es.index(index=index_name, body=json_data, id=json_data['id'])
+                elif current_file.file.name.endswith('.json'):
+                    with current_file.file.open() as f:
+                        json_data = json.load(f)
+                        self.es.index(index=index_name, body=json_data)
 
-                    response_data = {
-                        "message": f"Data updated in Elasticsearch index '{index_name}' successfully"
-                    }
+                response_data = {
+                    "message": f"Data updated in Elasticsearch index '{index_name}' successfully"
+                }
 
-                    return render(request, 'fileuploader/elastic_upload_success.html', {'response_data': response_data})
+                return render(request, 'fileuploader/elastic_upload_success.html', {'response_data': response_data})
 
-                else:
-                    return JsonResponse({"message": "Elasticsearch cluster is not reachable"})
+            else:
+                return JsonResponse({"message": "Elasticsearch cluster is not reachable"})
 
-            except Exception as e:
-                return JsonResponse({"message": f"Error: {str(e)}"})
+        except Exception as e:
+            return JsonResponse({"message": f"Error: {str(e)}"})
 
 
     def delete_data(self, request, index_name):

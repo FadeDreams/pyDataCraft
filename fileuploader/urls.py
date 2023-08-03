@@ -5,9 +5,6 @@ from django.conf import settings
 from . import views
 
 urlpatterns = [
-    path('test/', views.TestMongoDBView.as_view(), name='test_mongodb'),
-    path('teste/', views.TestElasticView.as_view(), name='test_elastic'),
-    path('testd/', views.test_del, name='test_del'),
     path('upload/', views.UploadFileView.as_view(), name='upload_file'),
     path('upload/success/', views.UploadSuccessView.as_view(), name='upload_success'),
     path('file/<int:pk>/', views.FileDetailView.as_view(), name='file_detail'),
