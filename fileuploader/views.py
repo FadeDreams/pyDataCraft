@@ -75,6 +75,17 @@ class TestElasticView(View):
         except Exception as e:
             return JsonResponse({"message": f"Error: {str(e)}"})
 
+def test_del(request):
+    es_uploader = ElasticsearchUploader(hosts=[{'host': es_host, 'port': es_port, 'scheme': es_scheme}])
+    # index_name = 'colt1'
+    index_name = mongodb_collection + '_' + str(92)
+    print(index_name)
+    es_uploader.delete_data(request, index_name)
+
+    print(f"{result['deleted']} documents deleted from Elasticsearch, {72}")
+    return HttpResponse("del")
+
+
 class UploadFileView(View):
     template_name = 'fileuploader/upload.html'
     
@@ -88,7 +99,7 @@ class UploadFileView(View):
             uploaded_file = form.cleaned_data['file']
             database_choice = form.cleaned_data['database']
 
-            instance = UploadedFile(file=uploaded_file)
+            instance = UploadedFile(file=uploaded_file, database=database_choice)
             instance.save()
 
             saved_instance_pk = instance.pk
@@ -118,18 +129,15 @@ class UploadFileView(View):
                     # Read JSON file
                     with current_file.file.open() as f:
                         json_data = json.load(f)
-
                         # Insert the JSON data directly with the identifier (pk)
                         json_data['identifier'] = identifier
                         collection.insert_one(json_data)
 
             if database_choice == 'elasticsearch':
-
-                # es_uploader = Elasticsearch(hosts=[{'host': es_host, 'port': es_port, 'scheme': es_scheme}])
-                # return es_uploader.upload_data(request, current_file, identifier)
-
                 es_uploader = ElasticsearchUploader(hosts=[{'host': es_host, 'port': es_port, 'scheme': es_scheme}])
-                es_uploader.upload_data(request, current_file, identifier)  # Update Elasticsearch data
+                # index_name = f'colt1_{identifier}'  # Use the identifier in the index name
+                index_name = mongodb_collection + '_' + str(identifier)
+                es_uploader.upload_data(request, current_file, index_name)  # Update Elasticsearch data
 
 
             return redirect('upload_success')
@@ -272,7 +280,8 @@ class FileUpdateView(View):
 
             elif file.database == 'elasticsearch':
                 es_uploader = ElasticsearchUploader(hosts=[{'host': es_host, 'port': es_port, 'scheme': es_scheme}])
-                es_uploader.upload_data(request, file, identifier)  # Update Elasticsearch data
+                index_name = mongodb_collection + '_' + str(identifier)
+                es_uploader.update_data(request, file, index_name)  # Update Elasticsearch data
                 # You might want to handle errors and return appropriate responses here
 
             return redirect('file_list')
@@ -289,6 +298,29 @@ class FileDeleteView(View):
 
     def post(self, request, pk) -> HttpResponse:
         file = get_object_or_404(UploadedFile, pk=pk)
+        
+        # Get the database choice for the uploaded file
+        database_choice = file.database
+        
+        identifier = file.pk
+        if database_choice == 'mongodb':
+            # Connect to MongoDB and delete data from the collection
+            client = MongoClient(mongodb_uri)
+            db = client[mongodb_name]
+            collection = db[mongodb_collection]
+            
+            result = collection.delete_many({'identifier': identifier})
+            print(f"{result.deleted_count} documents deleted from Elasticsearch, {identifier}")
+        
+        elif database_choice == 'elasticsearch':
+            es_uploader = ElasticsearchUploader(hosts=[{'host': es_host, 'port': es_port, 'scheme': es_scheme}])
+            index_name = mongodb_collection + '_' + str(identifier)
+            result = es_uploader.delete_data(request, index_name)  
+            
+            print(f"{result['deleted']} documents deleted from Elasticsearch, {file.pk}")
+        
+        # Delete the file record
         file.delete()
+        
         return redirect('file_list')
 

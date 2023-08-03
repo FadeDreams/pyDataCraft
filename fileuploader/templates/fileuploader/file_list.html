@@ -33,8 +33,6 @@
       </li>
       {% endfor %}
     </ul>
-    {% else %}
-    <p>No word clouds available.</p>
     {% endif %} {% if word_clouds_json %}
     <ul>
       {% for file, image_path in word_clouds_json %}
@@ -51,7 +49,7 @@
       </li>
       {% endfor %}
     </ul>
-    {% else %}
+    {% endif %} {% if not word_clouds and not word_clouds_json %}
     <p>No word clouds json available.</p>
     {% endif %}
   </body>
