@@ -3,8 +3,8 @@
 1. Clone this repository:
 
    ```bash
-   git clone git@github.com:FadeDreams/task1.git
-   cd task1
+   git clone git@github.com:FadeDreams/pyDataCraft.git
+   cd pyDataCraft
    python3 -m venv venv
    source venv/bin/activate
    pip install -r requirements.txt
